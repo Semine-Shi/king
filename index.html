@@ -1,81 +1,122 @@
 <!DOCTYPE html>
-<!--
-	NOTES:
-	1. All tokens are represented by '$' sign in the template.
-	2. You can write your code only wherever mentioned.
-	3. All occurrences of existing tokens will be replaced by their appropriate values.
-	4. Blank lines will be removed automatically.
-	5. Remove unnecessary comments before creating your template.
--->
 <html>
 <head>
 <meta charset="UTF-8">
 <meta name="authoring-tool" content="Adobe_Animate_CC">
 <title>Web_game (1)</title>
-<!-- write your code here -->
+
+<!-- ✅ 加载页样式 -->
 <style>
-  #animation_container {
-	position:absolute;
-	margin:auto;
-	left:0;right:0;
-	top:0;bottom:0;
+  #loadingScreen {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background-color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 32px;
+    font-family: Arial, sans-serif;
+    z-index: 1000;
   }
 </style>
+
+<!-- ✅ createjs 库 -->
 <script src="https://code.createjs.com/1.0.0/createjs.min.js"></script>
+<!-- ✅ 你自己导出的 JS -->
 <script src="Web_game.js"></script>
+
 <script>
 var canvas, stage, exportRoot, anim_container, dom_overlay_container, fnStartAnimation;
+
 function init() {
-	canvas = document.getElementById("canvas");
-	anim_container = document.getElementById("animation_container");
-	dom_overlay_container = document.getElementById("dom_overlay_container");
-	var comp=AdobeAn.getComposition("B8DF1EA81D4B4040B2F8581FD8DC1CEA");
-	var lib=comp.getLibrary();
-	var loader = new createjs.LoadQueue(false);
-	loader.installPlugin(createjs.Sound);
-	loader.addEventListener("fileload", function(evt){handleFileLoad(evt,comp)});
-	loader.addEventListener("complete", function(evt){handleComplete(evt,comp)});
-	var lib=comp.getLibrary();
-	loader.loadManifest(lib.properties.manifest);
+  // ✅ 设置 loading 文本为 0%
+  document.getElementById("progressText").innerText = "0%";
+
+  canvas = document.getElementById("canvas");
+  anim_container = document.getElementById("animation_container");
+  dom_overlay_container = document.getElementById("dom_overlay_container");
+
+  var comp = AdobeAn.getComposition("B8DF1EA81D4B4040B2F8581FD8DC1CEA");
+  var lib = comp.getLibrary();
+  var loader = new createjs.LoadQueue(false);
+  loader.installPlugin(createjs.Sound);
+  loader.addEventListener("fileload", function(evt) { handleFileLoad(evt, comp); });
+
+  // ✅ 监听加载进度
+  loader.addEventListener("progress", function(event) {
+    var percent = Math.floor(event.progress * 100);
+    document.getElementById("progressText").innerText = percent + "%";
+  });
+
+  // ✅ 加载完成后隐藏 loading，显示 canvas
+  loader.addEventListener("complete", function(evt) {
+    document.getElementById("loadingScreen").style.display = "none";
+    document.getElementById("animation_container").style.display = "block";
+    handleComplete(evt, comp);
+  });
+
+  loader.loadManifest(lib.properties.manifest);
 }
+
 function handleFileLoad(evt, comp) {
-	var images=comp.getImages();	
-	if (evt && (evt.item.type == "image")) { images[evt.item.id] = evt.result; }	
+  var images = comp.getImages();	
+  if (evt && (evt.item.type == "image")) {
+    images[evt.item.id] = evt.result;
+  }	
 }
-function handleComplete(evt,comp) {
-	//This function is always called, irrespective of the content. You can use the variable "stage" after it is created in token create_stage.
-	var lib=comp.getLibrary();
-	var ss=comp.getSpriteSheet();
-	var queue = evt.target;
-	var ssMetadata = lib.ssMetadata;
-	for(i=0; i<ssMetadata.length; i++) {
-		ss[ssMetadata[i].name] = new createjs.SpriteSheet( {"images": [queue.getResult(ssMetadata[i].name)], "frames": ssMetadata[i].frames} )
-	}
-	exportRoot = new lib.Web_game1();
-	stage = new lib.Stage(canvas);
-	stage.enableMouseOver();	
-	//Registers the "tick" event listener.
-	fnStartAnimation = function() {
-		stage.addChild(exportRoot);
-		createjs.Ticker.framerate = lib.properties.fps;
-		createjs.Ticker.addEventListener("tick", stage);
-		createjs.Ticker.addEventListener("tick", AdobeAn.handleSoundStreamOnTick);
-	}	    
-	//Code to support hidpi screens and responsive scaling.
-	AdobeAn.makeResponsive(false,'both',false,1,[canvas,anim_container,dom_overlay_container]);	
-	AdobeAn.compositionLoaded(lib.properties.id);
-	fnStartAnimation();
+
+function handleComplete(evt, comp) {
+  var lib = comp.getLibrary();
+  var ss = comp.getSpriteSheet();
+  var queue = evt.target;
+  var ssMetadata = lib.ssMetadata;
+
+  for (i = 0; i < ssMetadata.length; i++) {
+    ss[ssMetadata[i].name] = new createjs.SpriteSheet({
+      "images": [queue.getResult(ssMetadata[i].name)],
+      "frames": ssMetadata[i].frames
+    });
+  }
+
+  exportRoot = new lib.Web_game1();
+  stage = new lib.Stage(canvas);
+  stage.enableMouseOver();
+
+  fnStartAnimation = function() {
+    stage.addChild(exportRoot);
+    createjs.Ticker.framerate = lib.properties.fps;
+    createjs.Ticker.addEventListener("tick", stage);
+    createjs.Ticker.addEventListener("tick", AdobeAn.handleSoundStreamOnTick);
+  }
+
+  AdobeAn.makeResponsive(false, 'both', false, 1, [canvas, anim_container, dom_overlay_container]);
+  AdobeAn.compositionLoaded(lib.properties.id);
+  fnStartAnimation();
 }
+
 function playSound(id, loop, offset) {
-	return createjs.Sound.play(id, {'interrupt':createjs.Sound.INTERRUPT_EARLY, 'loop': loop, 'offset': offset});}
+  return createjs.Sound.play(id, {
+    'interrupt': createjs.Sound.INTERRUPT_EARLY,
+    'loop': loop,
+    'offset': offset
+  });
+}
 </script>
-<!-- write your code here -->
+
 </head>
+
 <body onload="init();" style="margin:0px;">
-	<div id="animation_container" style="background-color:rgba(255, 255, 255, 1.00); width:1920px; height:1080px">
-		<canvas id="canvas" width="1920" height="1080" style="position: absolute; display: block; background-color:rgba(255, 255, 255, 1.00);"></canvas>
-		<div id="dom_overlay_container" style="pointer-events:none; overflow:hidden; width:1920px; height:1080px; position: absolute; left: 0px; top: 0px; display: block;">
-		</div>
-	</div>
+
+  <!-- ✅ 加载动画页 -->
+  <div id="loadingScreen">
+    Loading... <span id="progressText">0%</span>
+  </div>
+
+  <!-- ✅ 初始隐藏的动画内容 -->
+  <div id="animation_container" style="display:none; background-color:rgba(255, 255, 255, 1.00); width:1920px; height:1080px;">
+    <canvas id="canvas" width="1920" height="1080" style="position: absolute; display: block; background-color:rgba(255, 255, 255, 1.00);"></canvas>
+    <div id="dom_overlay_container" style="pointer-events:none; overflow:hidden; width:1920px; height:1080px; position: absolute; left: 0px; top: 0px; display: block;"></div>
+  </div>
+
 </body>
 </html>
